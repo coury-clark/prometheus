@@ -3,6 +3,18 @@
 exports[`AlertsContent matches a snapshot 1`] = `
 <Fragment>
   <div
+    className="d-flex mb-4"
+  >
+    <Input
+      aria-label="Search Text Input"
+      id="alert-search-input"
+      onChange={[Function]}
+      placeholder="Search"
+      type="search"
+      value=""
+    />
+  </div>
+  <div
     className="d-flex togglers-wrapper"
   >
     <Memo(Checkbox)

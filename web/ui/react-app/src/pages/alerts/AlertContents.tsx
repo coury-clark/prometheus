@@ -1,10 +1,11 @@
 import React, { FC, Fragment } from 'react';
-import { Badge } from 'reactstrap';
+import { Badge, Input } from 'reactstrap';
 import CollapsibleAlertPanel from './CollapsibleAlertPanel';
 import Checkbox from '../../components/Checkbox';
 import { isPresent } from '../../utils';
 import { Rule } from '../../types/types';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import fuzzy from 'fuzzy';
 
 export type RuleState = keyof RuleStatus<any>;
 
@@ -55,8 +56,45 @@ const AlertsContent: FC<AlertsProps> = ({ groups = [], statsCount }) => {
     });
   };
 
+  const [searchText, setSearchText] = useLocalStorage('alerts-search-text', '');
+
+  const filterRules = (rules: Rule[]) => {
+    return fuzzy
+      .filter(searchText, rules, {
+        extract: function(el) {
+          return el.name;
+        },
+      })
+      .map(el => el.original);
+  };
+
+  const filterBySearch = (groups: RuleGroup[]) => {
+    const filteredGroups: RuleGroup[] = [];
+    groups.forEach(group => {
+      const filteredRules = filterRules(group.rules);
+      if (filterRules && filterRules.length > 0) {
+        filteredGroups.push({
+          ...group,
+          rules: filteredRules,
+        });
+      }
+    });
+    return filteredGroups;
+  };
+
   return (
     <>
+      <div className="d-flex mb-4">
+        <Input
+          id="alert-search-input"
+          aria-label="Search Text Input"
+          type="search"
+          placeholder="Search"
+          value={searchText}
+          onChange={event => setSearchText(event.target.value)}
+        />
+      </div>
+
       <div className="d-flex togglers-wrapper">
         {stateColorTuples.map(([state, color]) => {
           return (
@@ -82,7 +120,8 @@ const AlertsContent: FC<AlertsProps> = ({ groups = [], statsCount }) => {
           <span style={{ fontSize: '0.9rem', lineHeight: 1.9 }}>Show annotations</span>
         </Checkbox>
       </div>
-      {groups.map((group, i) => {
+
+      {filterBySearch(groups).map((group, i) => {
         const hasFilterOn = group.rules.some(rule => filter[rule.state]);
         return hasFilterOn ? (
           <Fragment key={i}>
